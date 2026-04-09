@@ -20,8 +20,13 @@ export type Database = {
           customer_id: string
           id: string
           maid_id: string
+          payment_id: string | null
+          payment_status: string | null
+          platform_fee: number | null
           scheduled_date: string
           status: string
+          total_amount: number | null
+          total_hours: number | null
           updated_at: string
         }
         Insert: {
@@ -29,8 +34,13 @@ export type Database = {
           customer_id: string
           id?: string
           maid_id: string
+          payment_id?: string | null
+          payment_status?: string | null
+          platform_fee?: number | null
           scheduled_date: string
           status?: string
+          total_amount?: number | null
+          total_hours?: number | null
           updated_at?: string
         }
         Update: {
@@ -38,8 +48,13 @@ export type Database = {
           customer_id?: string
           id?: string
           maid_id?: string
+          payment_id?: string | null
+          payment_status?: string | null
+          platform_fee?: number | null
           scheduled_date?: string
           status?: string
+          total_amount?: number | null
+          total_hours?: number | null
           updated_at?: string
         }
         Relationships: [

@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
-import { Shield, LogOut, Menu, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Shield, LogOut, Menu, X, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 export const Navbar = () => {
   const { user, isAdmin, signOut } = useAuth();
+  const { items } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -20,6 +23,16 @@ export const Navbar = () => {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="relative" asChild>
+            <Link to="/cart">
+              <ShoppingCart className="h-5 w-5" />
+              {items.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                  {items.length}
+                </Badge>
+              )}
+            </Link>
+          </Button>
           {user ? (
             <>
               {isAdmin && (
@@ -40,9 +53,21 @@ export const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="relative" asChild>
+            <Link to="/cart">
+              <ShoppingCart className="h-5 w-5" />
+              {items.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground">
+                  {items.length}
+                </Badge>
+              )}
+            </Link>
+          </Button>
+          <button className="p-2" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

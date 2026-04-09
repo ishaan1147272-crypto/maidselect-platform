@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare, IndianRupee } from 'lucide-react';
 
 interface MaidForm {
   name: string; bio: string; experience_years: string; hourly_rate: string; city: string; profile_image_url: string;
@@ -53,6 +53,9 @@ const Admin = () => {
       return data;
     },
   });
+
+  const confirmedBookings = bookings?.filter(b => b.status === 'confirmed' || b.payment_status === 'paid') || [];
+  const totalRevenue = bookings?.reduce((sum, b) => sum + ((b.total_amount || 0) + (b.platform_fee || 0)), 0) || 0;
 
   const saveMaid = useMutation({
     mutationFn: async () => {
@@ -132,6 +135,43 @@ const Admin = () => {
   return (
     <div className="container py-8 space-y-6 max-w-5xl">
       <h1 className="text-2xl font-heading font-bold">Admin Dashboard</h1>
+
+      {/* Revenue Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <IndianRupee className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total Revenue</p>
+              <p className="text-xl font-bold">₹{totalRevenue.toLocaleString()}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Confirmed Bookings</p>
+              <p className="text-xl font-bold">{confirmedBookings.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total Maids</p>
+              <p className="text-xl font-bold">{maids?.length || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Tabs defaultValue="maids">
         <TabsList className="w-full grid grid-cols-3">
@@ -216,10 +256,17 @@ const Admin = () => {
             <Card key={b.id}>
               <CardContent className="flex items-center justify-between p-4 gap-4">
                 <div className="space-y-1 flex-1 min-w-0">
-                  <span className="font-medium text-sm">{b.maids?.name || 'Unknown'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{b.maids?.name || 'Unknown'}</span>
+                    {b.payment_status === 'paid' && <Badge className="text-xs bg-primary/10 text-primary">Paid</Badge>}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {new Date(b.scheduled_date).toLocaleString()}
+                    {b.total_hours && ` • ${b.total_hours}hrs`}
+                    {b.total_amount && ` • ₹${b.total_amount}`}
+                    {b.platform_fee ? ` + ₹${b.platform_fee} fee` : ''}
                   </p>
+                  {b.payment_id && <p className="text-xs text-muted-foreground font-mono">Pay: {b.payment_id}</p>}
                 </div>
                 <Select value={b.status} onValueChange={status => updateBookingStatus.mutate({ id: b.id, status })}>
                   <SelectTrigger className="w-[130px]">

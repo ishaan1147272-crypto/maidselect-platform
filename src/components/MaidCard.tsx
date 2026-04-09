@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Star, MapPin, BadgeCheck } from 'lucide-react';
+import { Star, MapPin, BadgeCheck, ShoppingCart, Check } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
 
 interface MaidCardProps {
   id: string;
@@ -17,6 +18,9 @@ interface MaidCardProps {
 }
 
 export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profile_image_url, is_verified, avgRating, reviewCount }: MaidCardProps) => {
+  const { addItem, isInCart } = useCart();
+  const inCart = isInCart(id);
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg animate-fade-in group">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
@@ -57,9 +61,21 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
             <span className="text-xs text-muted-foreground">{experience_years}yr exp</span>
           )}
         </div>
-        <Button className="w-full mt-2" size="sm" asChild>
-          <Link to={`/maid/${id}`}>View Profile</Link>
-        </Button>
+        <div className="flex gap-2 mt-2">
+          <Button className="flex-1" size="sm" asChild>
+            <Link to={`/maid/${id}`}>View Profile</Link>
+          </Button>
+          <Button
+            variant={inCart ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => !inCart && addItem({ id, name, hourly_rate, city, profile_image_url })}
+            disabled={inCart}
+            className="gap-1"
+          >
+            {inCart ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+            {inCart ? 'Added' : 'Select'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
