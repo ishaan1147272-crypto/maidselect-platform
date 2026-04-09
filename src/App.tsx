@@ -4,11 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CartProvider } from "@/hooks/useCart";
 import { Navbar } from "@/components/Navbar";
 import Index from "./pages/Index";
 import MaidProfile from "./pages/MaidProfile";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Cart from "./pages/Cart";
+import BookingSuccess from "./pages/BookingSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,14 +23,18 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/maid/:id" element={<MaidProfile />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <CartProvider>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/maid/:id" element={<MaidProfile />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/booking-success" element={<BookingSuccess />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CartProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
