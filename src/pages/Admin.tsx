@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -183,9 +183,7 @@ const Admin = () => {
         {/* MAIDS TAB */}
         <TabsContent value="maids" className="space-y-4">
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(emptyForm); setEditingId(null); } }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-1.5 h-4 w-4" />Add Maid</Button>
-            </DialogTrigger>
+            <Button asChild><Link to="/admin/add-maid"><Plus className="mr-1.5 h-4 w-4" />Add Maid</Link></Button>
             <DialogContent>
               <DialogHeader><DialogTitle>{editingId ? 'Edit Maid' : 'New Maid'}</DialogTitle></DialogHeader>
               <div className="space-y-3">
