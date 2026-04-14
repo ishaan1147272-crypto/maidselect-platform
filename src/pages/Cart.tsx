@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, ShoppingCart, ArrowLeft, Minus, Plus } from 'lucide-react';
+import { Trash2, ShoppingCart, ArrowLeft, Minus, Plus, Tag } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -15,12 +17,35 @@ declare global {
   }
 }
 
-const RAZORPAY_KEY = 'rzp_live_SbPnrrGOpvRt3g';
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_SbPnrrGOpvRt3g';
 
 const Cart = () => {
   const { items, removeItem, updateHours, clearCart, subtotal, platformFee, total } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user is a first-time customer (0 confirmed bookings)
+  const { data: bookingCount } = useQuery({
+    queryKey: ['user-booking-count', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', user.id)
+        .eq('status', 'confirmed');
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  const isFirstTime = user && bookingCount === 0;
+  const discountPercent = isFirstTime ? 20 : 0;
+  const discountAmount = Math.round(subtotal * discountPercent / 100);
+  const discountedSubtotal = subtotal - discountAmount;
+  const adjustedPlatformFee = Math.round(discountedSubtotal * 0.1);
+  const grandTotal = discountedSubtotal + adjustedPlatformFee;
 
   const handlePayment = () => {
     if (!user) {
@@ -32,30 +57,37 @@ const Cart = () => {
 
     const options = {
       key: RAZORPAY_KEY,
-      amount: total * 100, // paise
+      amount: grandTotal * 100,
       currency: 'INR',
       name: 'MaidSelect',
       description: `Booking for ${items.length} professional(s)`,
       handler: async (response: any) => {
         try {
           const scheduledDate = new Date().toISOString();
-          const bookings = items.map(item => ({
-            customer_id: user.id,
-            maid_id: item.id,
-            scheduled_date: scheduledDate,
-            status: 'confirmed',
-            total_hours: item.hours,
-            total_amount: item.hourly_rate * item.hours,
-            platform_fee: Math.round(item.hourly_rate * item.hours * 0.1),
-            payment_id: response.razorpay_payment_id,
-            payment_status: 'paid',
-          }));
+          const bookings = items.map(item => {
+            const itemTotal = item.hourly_rate * item.hours;
+            const itemDiscount = Math.round(itemTotal * discountPercent / 100);
+            const itemFinal = itemTotal - itemDiscount;
+            return {
+              customer_id: user.id,
+              maid_id: item.id,
+              scheduled_date: scheduledDate,
+              status: 'confirmed',
+              total_hours: item.hours,
+              total_amount: itemFinal,
+              platform_fee: Math.round(itemFinal * 0.1),
+              payment_id: response.razorpay_payment_id,
+              payment_status: 'paid',
+            };
+          });
 
           const { error } = await supabase.from('bookings').insert(bookings);
           if (error) throw error;
 
+          // Pass maid IDs to success page
+          const maidIds = items.map(i => i.id).join(',');
           clearCart();
-          navigate('/booking-success');
+          navigate(`/booking-success?maids=${maidIds}`);
         } catch (e: any) {
           toast.error('Booking failed: ' + e.message);
         }
@@ -85,6 +117,16 @@ const Cart = () => {
         <ArrowLeft className="mr-1 h-4 w-4" />Back
       </Button>
       <h1 className="text-2xl font-heading font-bold">Your Cart</h1>
+
+      {isFirstTime && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <Tag className="h-5 w-5 text-primary shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-primary">FIRST20 — 20% Off Your First Booking!</p>
+            <p className="text-xs text-muted-foreground">Applied automatically for new customers.</p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {items.map(item => (
@@ -128,19 +170,33 @@ const Cart = () => {
         <CardContent className="p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>₹{subtotal}</span>
+            <span className={isFirstTime ? 'line-through text-muted-foreground' : ''}>₹{subtotal}</span>
           </div>
+          {isFirstTime && (
+            <div className="flex justify-between text-sm">
+              <span className="text-primary font-medium flex items-center gap-1">
+                <Badge variant="secondary" className="text-[10px]">FIRST20</Badge> Discount (20%)
+              </span>
+              <span className="text-primary font-medium">-₹{discountAmount}</span>
+            </div>
+          )}
+          {isFirstTime && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Discounted Subtotal</span>
+              <span>₹{discountedSubtotal}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Platform Fee (10%)</span>
-            <span>₹{platformFee}</span>
+            <span>₹{isFirstTime ? adjustedPlatformFee : platformFee}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span className="text-primary">₹{total}</span>
+            <span>Grand Total</span>
+            <span className="text-primary">₹{grandTotal}</span>
           </div>
           <Button className="w-full" size="lg" onClick={handlePayment}>
-            Proceed to Pay ₹{total}
+            Proceed to Pay ₹{grandTotal}
           </Button>
         </CardContent>
       </Card>
