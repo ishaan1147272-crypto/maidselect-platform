@@ -14,7 +14,7 @@ const Index = () => {
   const { data: maids, isLoading } = useQuery({
     queryKey: ['maids'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('maids').select('*').eq('is_available', true);
+      const { data, error } = await supabase.from('maids').select('*').eq('is_available', true).eq('is_verified', true);
       if (error) throw error;
       return data;
     },

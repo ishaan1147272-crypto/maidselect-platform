@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import MaidProfile from "./pages/MaidProfile";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import AddMaid from "./pages/AddMaid";
 import Cart from "./pages/Cart";
 import BookingSuccess from "./pages/BookingSuccess";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/maid/:id" element={<MaidProfile />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/add-maid" element={<AddMaid />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/booking-success" element={<BookingSuccess />} />
               <Route path="*" element={<NotFound />} />
