@@ -78,6 +78,7 @@ export type Database = {
           is_available: boolean
           is_verified: boolean
           name: string
+          phone: string | null
           profile_image_url: string | null
           updated_at: string
         }
@@ -91,6 +92,7 @@ export type Database = {
           is_available?: boolean
           is_verified?: boolean
           name: string
+          phone?: string | null
           profile_image_url?: string | null
           updated_at?: string
         }
@@ -104,6 +106,7 @@ export type Database = {
           is_available?: boolean
           is_verified?: boolean
           name?: string
+          phone?: string | null
           profile_image_url?: string | null
           updated_at?: string
         }
