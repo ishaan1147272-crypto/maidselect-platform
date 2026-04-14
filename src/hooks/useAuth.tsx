@@ -34,12 +34,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(!!data);
   };
 
+  const syncProfile = async (user: User) => {
+    const meta = user.user_metadata;
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email ?? meta?.email,
+      full_name: meta?.full_name || meta?.name || null,
+      avatar_url: meta?.avatar_url || meta?.picture || null,
+    }, { onConflict: 'id' });
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => checkAdmin(session.user.id), 0);
+        setTimeout(() => {
+          checkAdmin(session.user.id);
+          syncProfile(session.user);
+        }, 0);
       } else {
         setIsAdmin(false);
       }
@@ -51,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdmin(session.user.id);
+        syncProfile(session.user);
       }
       setLoading(false);
     });

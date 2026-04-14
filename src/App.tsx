@@ -14,6 +14,7 @@ import AddMaid from "./pages/AddMaid";
 import Cart from "./pages/Cart";
 import BookingSuccess from "./pages/BookingSuccess";
 import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -30,10 +31,10 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/maid/:id" element={<MaidProfile />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/add-maid" element={<AddMaid />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/booking-success" element={<BookingSuccess />} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/admin/add-maid" element={<ProtectedRoute><AddMaid /></ProtectedRoute>} />
+              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+              <Route path="/booking-success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </CartProvider>
