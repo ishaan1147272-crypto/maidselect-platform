@@ -4,12 +4,8 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, ShoppingCart, ArrowLeft, Minus, Plus, Tag } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, Lock, ShieldCheck, BadgeCheck, ShoppingCart, Tag } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -24,7 +20,6 @@ const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Check if user is a first-time customer (0 confirmed bookings)
   const { data: bookingCount } = useQuery({
     queryKey: ['user-booking-count', user?.id],
     queryFn: async () => {
@@ -46,6 +41,7 @@ const Cart = () => {
   const discountedSubtotal = subtotal - discountAmount;
   const adjustedPlatformFee = Math.round(discountedSubtotal * 0.1);
   const grandTotal = discountedSubtotal + adjustedPlatformFee;
+  const totalSavings = discountAmount;
 
   const handlePayment = () => {
     if (!user) {
@@ -84,7 +80,6 @@ const Cart = () => {
           const { error } = await supabase.from('bookings').insert(bookings);
           if (error) throw error;
 
-          // Pass maid IDs to success page
           const maidIds = items.map(i => i.id).join(',');
           clearCart();
           navigate(`/booking-success?maids=${maidIds}`);
@@ -102,104 +97,180 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <div className="container py-16 text-center space-y-4">
-        <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground/30" />
-        <h2 className="text-xl font-heading font-semibold text-muted-foreground">Your cart is empty</h2>
-        <p className="text-sm text-muted-foreground">Browse our professionals and add them to your cart.</p>
-        <Button onClick={() => navigate('/')}>Browse Professionals</Button>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center gap-4">
+        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+          <ShoppingCart className="h-9 w-9 text-muted-foreground/40" />
+        </div>
+        <h2 className="text-xl font-heading font-semibold text-foreground">Your cart is empty</h2>
+        <p className="text-sm text-muted-foreground max-w-[260px]">Browse our verified professionals and add them to your cart.</p>
+        <Button onClick={() => navigate('/')} className="mt-2 rounded-xl px-8">Browse Professionals</Button>
       </div>
     );
   }
 
   return (
-    <div className="container py-8 max-w-2xl space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-        <ArrowLeft className="mr-1 h-4 w-4" />Back
-      </Button>
-      <h1 className="text-2xl font-heading font-bold">Your Cart</h1>
-
-      {isFirstTime && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <Tag className="h-5 w-5 text-primary shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-primary">FIRST20 — 20% Off Your First Booking!</p>
-            <p className="text-xs text-muted-foreground">Applied automatically for new customers.</p>
-          </div>
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Compact Header */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/60">
+        <div className="flex items-center gap-3 px-4 py-3 max-w-2xl mx-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="h-9 w-9 rounded-full bg-muted/60 flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <ArrowLeft className="h-4.5 w-4.5 text-foreground" />
+          </button>
+          <h1 className="text-lg font-heading font-bold text-foreground">Cart</h1>
+          <span className="ml-auto text-xs font-medium text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
+            {items.length} item{items.length > 1 ? 's' : ''}
+          </span>
         </div>
-      )}
-
-      <div className="space-y-3">
-        {items.map(item => (
-          <Card key={item.id}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <img
-                src={item.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&size=80&background=2d9d78&color=fff`}
-                alt={item.name}
-                className="h-14 w-14 rounded-lg object-cover shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm">{item.name}</h3>
-                {item.city && <p className="text-xs text-muted-foreground">{item.city}</p>}
-                <p className="text-xs text-muted-foreground">₹{item.hourly_rate}/hr</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateHours(item.id, item.hours - 1)}>
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <Input
-                  type="number"
-                  min={1}
-                  value={item.hours}
-                  onChange={e => updateHours(item.id, parseInt(e.target.value) || 1)}
-                  className="w-14 h-7 text-center text-sm"
-                />
-                <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateHours(item.id, item.hours + 1)}>
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-              <p className="font-semibold text-sm w-20 text-right">₹{item.hourly_rate * item.hours}</p>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeItem(item.id)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className={isFirstTime ? 'line-through text-muted-foreground' : ''}>₹{subtotal}</span>
-          </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-[200px]">
+        <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+
+          {/* First-time discount banner */}
           {isFirstTime && (
-            <div className="flex justify-between text-sm">
-              <span className="text-primary font-medium flex items-center gap-1">
-                <Badge variant="secondary" className="text-[10px]">FIRST20</Badge> Discount (20%)
-              </span>
-              <span className="text-primary font-medium">-₹{discountAmount}</span>
+            <div className="flex items-center gap-3 rounded-2xl bg-primary/8 border border-primary/20 px-4 py-3">
+              <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <Tag className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-primary">FIRST20 — 20% Off Applied!</p>
+                <p className="text-xs text-muted-foreground">Welcome discount for new customers.</p>
+              </div>
             </div>
           )}
-          {isFirstTime && (
+
+          {/* Cart Items */}
+          <div className="space-y-3">
+            {items.map(item => {
+              const lineTotal = item.hourly_rate * item.hours;
+              return (
+                <div
+                  key={item.id}
+                  className="bg-card rounded-2xl border border-border/60 p-4 flex items-center gap-4 shadow-sm"
+                >
+                  {/* Circular avatar */}
+                  <img
+                    src={item.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&size=80&background=2d9d78&color=fff`}
+                    alt={item.name}
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-primary/15 shrink-0"
+                  />
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-heading font-bold text-[15px] text-foreground truncate">{item.name}</h3>
+                    {item.city && <p className="text-xs text-muted-foreground mt-0.5">{item.city}</p>}
+                    <p className="text-xs text-muted-foreground">₹{item.hourly_rate}/hr</p>
+                  </div>
+
+                  {/* Pill-shaped quantity selector */}
+                  <div className="flex items-center bg-muted/70 rounded-full h-9 shrink-0">
+                    <button
+                      onClick={() => updateHours(item.id, item.hours - 1)}
+                      className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Minus className="h-3.5 w-3.5 text-foreground" />
+                    </button>
+                    <span className="w-7 text-center text-sm font-semibold text-foreground">{item.hours}</span>
+                    <button
+                      onClick={() => updateHours(item.id, item.hours + 1)}
+                      className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-foreground" />
+                    </button>
+                  </div>
+
+                  {/* Price & delete */}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="font-heading font-bold text-sm text-foreground">₹{lineTotal}</span>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-destructive/60 hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pricing Breakdown */}
+          <div className="bg-card rounded-2xl border border-border/60 p-5 space-y-3 shadow-sm">
+            <h3 className="text-sm font-heading font-semibold text-foreground">Price Details</h3>
+
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Discounted Subtotal</span>
-              <span>₹{discountedSubtotal}</span>
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className={isFirstTime ? 'line-through text-muted-foreground' : 'text-foreground font-medium'}>₹{subtotal}</span>
             </div>
-          )}
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Platform Fee (10%)</span>
-            <span>₹{isFirstTime ? adjustedPlatformFee : platformFee}</span>
+
+            {isFirstTime && (
+              <div className="flex justify-between text-sm">
+                <span className="text-primary font-medium">Discount (20%)</span>
+                <span className="text-primary font-medium">−₹{discountAmount}</span>
+              </div>
+            )}
+
+            {isFirstTime && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">After Discount</span>
+                <span className="text-foreground font-medium">₹{discountedSubtotal}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Platform Fee (10%)</span>
+              <span className="text-foreground font-medium">₹{isFirstTime ? adjustedPlatformFee : platformFee}</span>
+            </div>
+
+            <div className="h-px bg-border/80 my-1" />
+
+            <div className="flex justify-between items-center">
+              <span className="font-heading font-bold text-base text-foreground">Grand Total</span>
+              <span className="font-heading font-bold text-xl text-primary">₹{grandTotal}</span>
+            </div>
+
+            {/* Savings highlight */}
+            {totalSavings > 0 && (
+              <div className="mt-2 bg-primary/8 border border-primary/15 rounded-xl px-4 py-2.5 text-center">
+                <p className="text-sm font-semibold text-primary">
+                  🎉 You are saving ₹{totalSavings} on this booking!
+                </p>
+              </div>
+            )}
           </div>
-          <Separator />
-          <div className="flex justify-between font-bold text-lg">
-            <span>Grand Total</span>
-            <span className="text-primary">₹{grandTotal}</span>
-          </div>
-          <Button className="w-full" size="lg" onClick={handlePayment}>
+        </div>
+      </div>
+
+      {/* Fixed Bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border/60">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-5 space-y-3">
+          <Button
+            className="w-full h-[52px] rounded-xl text-base font-semibold gap-2 shadow-lg shadow-primary/20"
+            size="lg"
+            onClick={handlePayment}
+          >
+            <Lock className="h-4 w-4" />
             Proceed to Pay ₹{grandTotal}
           </Button>
-        </CardContent>
-      </Card>
+
+          {/* Trust signals */}
+          <div className="flex items-center justify-center gap-5">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="text-[11px] font-medium">Secure Payment</span>
+            </div>
+            <div className="h-3 w-px bg-border" />
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <BadgeCheck className="h-3.5 w-3.5" />
+              <span className="text-[11px] font-medium">Verified Professionals</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
