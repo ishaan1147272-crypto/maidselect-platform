@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MaidCard } from '@/components/MaidCard';
+import { PriceToggle, type PriceMode } from '@/components/PriceToggle';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Sparkles } from 'lucide-react';
@@ -10,7 +11,7 @@ const Index = () => {
   const [search, setSearch] = useState('');
   const [cityFilter, setCityFilter] = useState('all');
   const [priceSort, setPriceSort] = useState('none');
-
+  const [priceMode, setPriceMode] = useState<PriceMode>('monthly');
   const { data: maids, isLoading } = useQuery({
     queryKey: ['maids'],
     queryFn: async () => {
@@ -70,6 +71,7 @@ const Index = () => {
 
       {/* Filters */}
       <section className="container py-8 space-y-6">
+        <PriceToggle value={priceMode} onChange={setPriceMode} />
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -125,6 +127,7 @@ const Index = () => {
                   is_verified={m.is_verified}
                   avgRating={r ? r.sum / r.count : null}
                   reviewCount={r?.count || 0}
+                  priceMode={priceMode}
                 />
               );
             })}
