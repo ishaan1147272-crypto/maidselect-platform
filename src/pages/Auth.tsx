@@ -15,11 +15,17 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const isAndroid = /android/i.test(navigator.userAgent);
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
+      const redirectUri = isAndroid
+        ? "com.example.maidselect://auth_callback"
+        : "https://maidselect.lovable.app";
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: "com.example.maidselect://auth_callback",
+        redirect_uri: redirectUri,
       });
       if (result.error) {
         toast.error(result.error.message || 'Google sign-in failed');
