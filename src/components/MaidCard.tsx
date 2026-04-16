@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, MapPin, BadgeCheck, ShoppingCart, Check } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
+import { type PriceMode } from '@/components/PriceToggle';
+import { getMaidRates, formatINR } from '@/lib/pricing';
 
 interface MaidCardProps {
   id: string;
@@ -15,11 +17,15 @@ interface MaidCardProps {
   is_verified: boolean;
   avgRating: number | null;
   reviewCount: number;
+  priceMode: PriceMode;
 }
 
-export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profile_image_url, is_verified, avgRating, reviewCount }: MaidCardProps) => {
+export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profile_image_url, is_verified, avgRating, reviewCount, priceMode }: MaidCardProps) => {
   const { addItem, isInCart } = useCart();
   const inCart = isInCart(id);
+  const rates = getMaidRates(id);
+  const suffixMap = { hourly: '/hr', weekly: '/wk', monthly: '/mo' };
+  const displayRate = rates[priceMode];
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg animate-fade-in group">
@@ -39,8 +45,7 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
         <div className="flex items-start justify-between">
           <h3 className="font-heading font-semibold text-lg text-card-foreground">{name}</h3>
           <div className="text-right">
-            <span className="text-lg font-bold text-primary">₹{hourly_rate}<span className="text-xs font-normal text-muted-foreground">/hr</span></span>
-            <p className="text-xs text-muted-foreground">₹{Math.round(hourly_rate * 8 * 26)}/mo</p>
+            <span className="text-lg font-bold text-primary">{formatINR(displayRate)}<span className="text-xs font-normal text-muted-foreground">{suffixMap[priceMode]}</span></span>
           </div>
         </div>
         {city && (
