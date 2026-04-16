@@ -38,7 +38,10 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
       <CardContent className="p-4 space-y-2">
         <div className="flex items-start justify-between">
           <h3 className="font-heading font-semibold text-lg text-card-foreground">{name}</h3>
-          <span className="text-lg font-bold text-primary">₹{hourly_rate}<span className="text-xs font-normal text-muted-foreground">/hr</span></span>
+          <div className="text-right">
+            <span className="text-lg font-bold text-primary">₹{hourly_rate}<span className="text-xs font-normal text-muted-foreground">/hr</span></span>
+            <p className="text-xs text-muted-foreground">₹{Math.round(hourly_rate * 8 * 26)}/mo</p>
+          </div>
         </div>
         {city && (
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
