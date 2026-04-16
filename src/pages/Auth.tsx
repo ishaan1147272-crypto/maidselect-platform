@@ -15,7 +15,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const isWebView = /android/i.test(navigator.userAgent) && (/wv|WebView/i.test(navigator.userAgent) || window.navigator.standalone === undefined && /Version\/[\d.]+/.test(navigator.userAgent) === false);
+  const isWebView = /android/i.test(navigator.userAgent) && /wv|; wv\)/i.test(navigator.userAgent);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
