@@ -42,7 +42,9 @@ const Index = () => {
   let filtered = maids?.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) || (m.city?.toLowerCase().includes(search.toLowerCase()));
     const matchCity = cityFilter === 'all' || m.city === cityFilter;
-    return matchSearch && matchCity;
+    const monthlyRate = m.hourly_rate * 8 * 26;
+    const matchMonthly = monthlyRate >= 21000 && monthlyRate <= 24000;
+    return matchSearch && matchCity && matchMonthly;
   }) || [];
 
   if (priceSort === 'low') filtered.sort((a, b) => a.hourly_rate - b.hourly_rate);

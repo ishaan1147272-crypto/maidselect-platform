@@ -15,12 +15,12 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const isAndroid = /android/i.test(navigator.userAgent);
+  const isWebView = /android/i.test(navigator.userAgent) && (/wv|WebView/i.test(navigator.userAgent) || window.navigator.standalone === undefined && /Version\/[\d.]+/.test(navigator.userAgent) === false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const redirectUri = isAndroid
+      const redirectUri = isWebView
         ? "com.example.maidselect://auth_callback"
         : "https://maidselect.lovable.app";
 
