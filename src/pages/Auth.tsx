@@ -15,12 +15,22 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const isWebView = /android/i.test(navigator.userAgent) && /wv|; wv\)/i.test(navigator.userAgent);
+  const isAndroidWebView = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    // Explicit flag injected by the Android wrapper
+    if ((window as any).isAndroidWebView === true) return true;
+    const ua = navigator.userAgent || '';
+    // Standard WebView markers: "wv" token, or Version/x.x Chrome on Android (legacy WebView)
+    const isAndroid = /android/i.test(ua);
+    const hasWvToken = /;\s*wv\)|\bwv\b/i.test(ua);
+    const isLegacyWebView = isAndroid && /Version\/[\d.]+/i.test(ua) && !/Chrome\/[.0-9]* (Mobile )?Safari/i.test(ua);
+    return isAndroid && (hasWvToken || isLegacyWebView);
+  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const redirectUri = isWebView
+      const redirectUri = isAndroidWebView()
         ? "com.example.maidselect://auth_callback"
         : "https://maidselect.lovable.app";
 

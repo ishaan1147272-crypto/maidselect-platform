@@ -42,10 +42,13 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
         )}
       </div>
       <CardContent className="p-4 space-y-2">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-2">
           <h3 className="font-heading font-semibold text-lg text-card-foreground">{name}</h3>
           <div className="text-right">
-            <span className="text-lg font-bold text-primary">{formatINR(displayRate)}<span className="text-xs font-normal text-muted-foreground">{suffixMap[priceMode]}</span></span>
+            <div className="text-lg font-bold text-primary leading-tight">
+              {formatINR(displayRate)}
+              <span className="text-xs font-normal text-muted-foreground">{suffixMap[priceMode]}</span>
+            </div>
           </div>
         </div>
         {city && (
@@ -53,6 +56,20 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
             <MapPin className="h-3.5 w-3.5" />{city}
           </p>
         )}
+        <div className="grid grid-cols-3 gap-1 rounded-md bg-muted/50 p-2 text-center">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Hourly</div>
+            <div className="text-xs font-semibold text-foreground">{formatINR(rates.hourly)}</div>
+          </div>
+          <div className="border-x border-border/60">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Weekly</div>
+            <div className="text-xs font-semibold text-foreground">{formatINR(rates.weekly)}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Monthly</div>
+            <div className="text-xs font-semibold text-foreground">{formatINR(rates.monthly)}</div>
+          </div>
+        </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             {avgRating ? (
