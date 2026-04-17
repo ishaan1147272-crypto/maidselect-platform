@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, MapPin, BadgeCheck, ShoppingCart, Check } from 'lucide-react';
-import { useCart } from '@/hooks/useCart';
+import { useCart, type PlanType } from '@/hooks/useCart';
 import { type PriceMode } from '@/components/PriceToggle';
 import { getMaidRates, formatINR } from '@/lib/pricing';
 
@@ -20,12 +21,39 @@ interface MaidCardProps {
   priceMode: PriceMode;
 }
 
+const planLabels: Record<PlanType, string> = {
+  hourly: 'Hourly',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
+const planSuffix: Record<PlanType, string> = {
+  hourly: '/hr',
+  weekly: '/wk',
+  monthly: '/mo',
+};
+
 export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profile_image_url, is_verified, avgRating, reviewCount, priceMode }: MaidCardProps) => {
   const { addItem, isInCart } = useCart();
   const inCart = isInCart(id);
   const rates = getMaidRates(id);
-  const suffixMap = { hourly: '/hr', weekly: '/wk', monthly: '/mo' };
+  // Default selected plan is 'monthly' per request
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('monthly');
   const displayRate = rates[priceMode];
+
+  const handleAdd = () => {
+    if (inCart) return;
+    addItem({
+      id,
+      name,
+      city,
+      profile_image_url,
+      planType: selectedPlan,
+      planPrice: rates[selectedPlan],
+    });
+  };
+
+  const plans: PlanType[] = ['hourly', 'weekly', 'monthly'];
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg animate-fade-in group">
@@ -41,13 +69,13 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
           </Badge>
         )}
       </div>
-      <CardContent className="p-4 space-y-2">
+      <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-heading font-semibold text-lg text-card-foreground">{name}</h3>
           <div className="text-right">
             <div className="text-lg font-bold text-primary leading-tight">
               {formatINR(displayRate)}
-              <span className="text-xs font-normal text-muted-foreground">{suffixMap[priceMode]}</span>
+              <span className="text-xs font-normal text-muted-foreground">{planSuffix[priceMode]}</span>
             </div>
           </div>
         </div>
@@ -56,20 +84,35 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
             <MapPin className="h-3.5 w-3.5" />{city}
           </p>
         )}
-        <div className="grid grid-cols-3 gap-1 rounded-md bg-muted/50 p-2 text-center">
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Hourly</div>
-            <div className="text-xs font-semibold text-foreground">{formatINR(rates.hourly)}</div>
-          </div>
-          <div className="border-x border-border/60">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Weekly</div>
-            <div className="text-xs font-semibold text-foreground">{formatINR(rates.weekly)}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Monthly</div>
-            <div className="text-xs font-semibold text-foreground">{formatINR(rates.monthly)}</div>
+
+        {/* Plan selector — segmented control */}
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">Choose plan</div>
+          <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted/60 p-1">
+            {plans.map(p => {
+              const active = selectedPlan === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setSelectedPlan(p)}
+                  disabled={inCart}
+                  className={`rounded-md px-2 py-1.5 text-center transition-all ${
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  } ${inCart ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-wide">{planLabels[p]}</div>
+                  <div className={`text-xs font-bold ${active ? 'text-primary-foreground' : 'text-foreground'}`}>
+                    {formatINR(rates[p])}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             {avgRating ? (
@@ -93,12 +136,12 @@ export const MaidCard = ({ id, name, city, hourly_rate, experience_years, profil
           <Button
             variant={inCart ? "secondary" : "outline"}
             size="sm"
-            onClick={() => !inCart && addItem({ id, name, hourly_rate, city, profile_image_url })}
+            onClick={handleAdd}
             disabled={inCart}
             className="gap-1"
           >
             {inCart ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-            {inCart ? 'Added' : 'Select'}
+            {inCart ? 'Added' : 'Add to Cart'}
           </Button>
         </div>
       </CardContent>
