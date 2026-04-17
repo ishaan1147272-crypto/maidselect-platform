@@ -1,19 +1,22 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
+export type PlanType = 'hourly' | 'weekly' | 'monthly';
+
 export interface CartItem {
   id: string;
   name: string;
-  hourly_rate: number;
   city: string | null;
   profile_image_url: string | null;
-  hours: number;
+  planType: PlanType;
+  planPrice: number; // price for one unit of the selected plan
+  quantity: number;  // number of hours/weeks/months
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (maid: Omit<CartItem, 'hours'>) => void;
+  addItem: (maid: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
-  updateHours: (id: string, hours: number) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   isInCart: (id: string) => boolean;
   subtotal: number;
@@ -22,17 +25,17 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType>({
-  items: [], addItem: () => {}, removeItem: () => {}, updateHours: () => {},
+  items: [], addItem: () => {}, removeItem: () => {}, updateQuantity: () => {},
   clearCart: () => {}, isInCart: () => false, subtotal: 0, platformFee: 0, total: 0,
 });
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const addItem = useCallback((maid: Omit<CartItem, 'hours'>) => {
+  const addItem = useCallback((maid: Omit<CartItem, 'quantity'>) => {
     setItems(prev => {
       if (prev.find(i => i.id === maid.id)) return prev;
-      return [...prev, { ...maid, hours: 1 }];
+      return [...prev, { ...maid, quantity: 1 }];
     });
   }, []);
 
@@ -40,19 +43,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems(prev => prev.filter(i => i.id !== id));
   }, []);
 
-  const updateHours = useCallback((id: string, hours: number) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, hours: Math.max(1, hours) } : i));
+  const updateQuantity = useCallback((id: string, quantity: number) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i));
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
   const isInCart = useCallback((id: string) => items.some(i => i.id === id), [items]);
 
-  const subtotal = items.reduce((sum, i) => sum + i.hourly_rate * i.hours, 0);
+  const subtotal = items.reduce((sum, i) => sum + i.planPrice * i.quantity, 0);
   const platformFee = Math.round(subtotal * 0.1);
   const total = subtotal + platformFee;
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateHours, clearCart, isInCart, subtotal, platformFee, total }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, isInCart, subtotal, platformFee, total }}>
       {children}
     </CartContext.Provider>
   );

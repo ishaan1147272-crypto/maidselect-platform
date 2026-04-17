@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ArrowLeft, Minus, Plus, Trash2, Lock, ShieldCheck, BadgeCheck, ShoppingCart, Tag } from 'lucide-react';
+import { formatINR } from '@/lib/pricing';
 
 declare global {
   interface Window {
@@ -15,8 +16,20 @@ declare global {
 
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_SbPnrrGOpvRt3g';
 
+const planLabels = {
+  hourly: 'Hourly Plan',
+  weekly: 'Weekly Plan',
+  monthly: 'Monthly Plan',
+} as const;
+
+const planUnit = {
+  hourly: 'hr',
+  weekly: 'wk',
+  monthly: 'mo',
+} as const;
+
 const Cart = () => {
-  const { items, removeItem, updateHours, clearCart, subtotal, platformFee, total } = useCart();
+  const { items, removeItem, updateQuantity, clearCart, subtotal, platformFee, total } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -56,12 +69,12 @@ const Cart = () => {
       amount: grandTotal * 100,
       currency: 'INR',
       name: 'MaidSelect',
-      description: `Booking for ${items.length} professional(s)`,
+      description: items.map(i => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250),
       handler: async (response: any) => {
         try {
           const scheduledDate = new Date().toISOString();
           const bookings = items.map(item => {
-            const itemTotal = item.hourly_rate * item.hours;
+            const itemTotal = item.planPrice * item.quantity;
             const itemDiscount = Math.round(itemTotal * discountPercent / 100);
             const itemFinal = itemTotal - itemDiscount;
             return {
@@ -69,7 +82,7 @@ const Cart = () => {
               maid_id: item.id,
               scheduled_date: scheduledDate,
               status: 'confirmed',
-              total_hours: item.hours,
+              total_hours: item.quantity,
               total_amount: itemFinal,
               platform_fee: Math.round(itemFinal * 0.1),
               payment_id: response.razorpay_payment_id,
@@ -146,46 +159,49 @@ const Cart = () => {
           {/* Cart Items */}
           <div className="space-y-3">
             {items.map(item => {
-              const lineTotal = item.hourly_rate * item.hours;
+              const lineTotal = item.planPrice * item.quantity;
               return (
                 <div
                   key={item.id}
                   className="bg-card rounded-2xl border border-border/60 p-4 flex items-center gap-4 shadow-sm"
                 >
-                  {/* Circular avatar */}
                   <img
                     src={item.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&size=80&background=2d9d78&color=fff`}
                     alt={item.name}
                     className="h-14 w-14 rounded-full object-cover ring-2 ring-primary/15 shrink-0"
                   />
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-heading font-bold text-[15px] text-foreground truncate">{item.name}</h3>
-                    {item.city && <p className="text-xs text-muted-foreground mt-0.5">{item.city}</p>}
-                    <p className="text-xs text-muted-foreground">₹{item.hourly_rate}/hr</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                        {planLabels[item.planType]}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {formatINR(item.planPrice)}/{planUnit[item.planType]}
+                      {item.city && ` · ${item.city}`}
+                    </p>
                   </div>
 
-                  {/* Pill-shaped quantity selector */}
                   <div className="flex items-center bg-muted/70 rounded-full h-9 shrink-0">
                     <button
-                      onClick={() => updateHours(item.id, item.hours - 1)}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
                     >
                       <Minus className="h-3.5 w-3.5 text-foreground" />
                     </button>
-                    <span className="w-7 text-center text-sm font-semibold text-foreground">{item.hours}</span>
+                    <span className="w-7 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
                     <button
-                      onClick={() => updateHours(item.id, item.hours + 1)}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
                     >
                       <Plus className="h-3.5 w-3.5 text-foreground" />
                     </button>
                   </div>
 
-                  {/* Price & delete */}
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="font-heading font-bold text-sm text-foreground">₹{lineTotal}</span>
+                    <span className="font-heading font-bold text-sm text-foreground">{formatINR(lineTotal)}</span>
                     <button
                       onClick={() => removeItem(item.id)}
                       className="text-destructive/60 hover:text-destructive transition-colors"
@@ -204,40 +220,39 @@ const Cart = () => {
 
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span className={isFirstTime ? 'line-through text-muted-foreground' : 'text-foreground font-medium'}>₹{subtotal}</span>
+              <span className={isFirstTime ? 'line-through text-muted-foreground' : 'text-foreground font-medium'}>{formatINR(subtotal)}</span>
             </div>
 
             {isFirstTime && (
               <div className="flex justify-between text-sm">
                 <span className="text-primary font-medium">Discount (20%)</span>
-                <span className="text-primary font-medium">−₹{discountAmount}</span>
+                <span className="text-primary font-medium">−{formatINR(discountAmount)}</span>
               </div>
             )}
 
             {isFirstTime && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">After Discount</span>
-                <span className="text-foreground font-medium">₹{discountedSubtotal}</span>
+                <span className="text-foreground font-medium">{formatINR(discountedSubtotal)}</span>
               </div>
             )}
 
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Platform Fee (10%)</span>
-              <span className="text-foreground font-medium">₹{isFirstTime ? adjustedPlatformFee : platformFee}</span>
+              <span className="text-foreground font-medium">{formatINR(isFirstTime ? adjustedPlatformFee : platformFee)}</span>
             </div>
 
             <div className="h-px bg-border/80 my-1" />
 
             <div className="flex justify-between items-center">
               <span className="font-heading font-bold text-base text-foreground">Grand Total</span>
-              <span className="font-heading font-bold text-xl text-primary">₹{grandTotal}</span>
+              <span className="font-heading font-bold text-xl text-primary">{formatINR(grandTotal)}</span>
             </div>
 
-            {/* Savings highlight */}
             {totalSavings > 0 && (
               <div className="mt-2 bg-primary/8 border border-primary/15 rounded-xl px-4 py-2.5 text-center">
                 <p className="text-sm font-semibold text-primary">
-                  🎉 You are saving ₹{totalSavings} on this booking!
+                  🎉 You are saving {formatINR(totalSavings)} on this booking!
                 </p>
               </div>
             )}
@@ -254,10 +269,9 @@ const Cart = () => {
             onClick={handlePayment}
           >
             <Lock className="h-4 w-4" />
-            Proceed to Pay ₹{grandTotal}
+            Proceed to Pay {formatINR(grandTotal)}
           </Button>
 
-          {/* Trust signals */}
           <div className="flex items-center justify-center gap-5">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5" />
