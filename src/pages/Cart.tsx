@@ -117,8 +117,17 @@ const Cart = () => {
       theme: { color: '#16a34a' },
     };
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (resp: any) => {
+        console.error('Razorpay payment.failed', resp);
+        toast.error(resp?.error?.description || 'Payment failed');
+      });
+      rzp.open();
+    } catch (e: any) {
+      console.error('Razorpay open() threw', e);
+      toast.error('Could not open checkout: ' + (e?.message || 'unknown error'));
+    }
   };
 
   if (items.length === 0) {
