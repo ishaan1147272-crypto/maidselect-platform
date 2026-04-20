@@ -55,6 +55,8 @@ const Cart = () => {
   const totalSavings = discountAmount;
 
   const handlePayment = async () => {
+    console.log('[Razorpay] handlePayment called');
+
     if (!user) {
       toast.error('Please sign in to proceed');
       navigate('/auth');
@@ -62,21 +64,30 @@ const Cart = () => {
     }
     if (items.length === 0) return;
 
+    console.log('[Razorpay] window.Razorpay loaded?', typeof window !== 'undefined' && !!window.Razorpay);
     if (typeof window === 'undefined' || !window.Razorpay) {
+      alert('Razorpay script failed to load. Please refresh the page.');
       toast.error('Payment script not loaded. Please refresh and try again.');
       return;
     }
 
     // 1. Create order on backend
+    const amountPaise = Math.round(grandTotal * 100);
+    console.log('[Razorpay] Creating order for amount (paise):', amountPaise);
     const { data: orderData, error: orderError } = await supabase.functions.invoke(
       'create-razorpay-order',
-      { body: { amount: Math.round(grandTotal * 100), currency: 'INR', receipt: `r_${Date.now()}` } },
+      { body: { amount: amountPaise, currency: 'INR', receipt: `r_${Date.now()}` } },
     );
+    console.log('[Razorpay] create-order response:', { orderData, orderError });
+
     if (orderError || !orderData?.order_id || !orderData?.keyId) {
-      console.error('Create order failed', orderError, orderData);
+      console.error('[Razorpay] Create order failed', orderError, orderData);
+      alert(`Order creation failed: ${orderError?.message || orderData?.error || 'no order_id returned'}`);
       toast.error(orderData?.error || 'Could not start payment. Please try again.');
       return;
     }
+
+    console.log('[Razorpay] Got order_id:', orderData.order_id);
 
     const description =
       items.map((i) => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250) ||
@@ -144,14 +155,22 @@ const Cart = () => {
     };
 
     try {
+      console.log('[Razorpay] Opening modal with options:', {
+        key: options.key,
+        order_id: options.order_id,
+        amount: options.amount,
+        currency: options.currency,
+      });
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (resp: any) => {
-        console.error('Razorpay payment.failed', resp);
+        console.error('[Razorpay] payment.failed', resp);
         toast.error(resp?.error?.description || 'Payment failed');
       });
       rzp.open();
+      console.log('[Razorpay] rzp.open() called');
     } catch (e: any) {
-      console.error('Razorpay open() threw', e);
+      console.error('[Razorpay] open() threw', e);
+      alert('Could not open Razorpay modal: ' + (e?.message || 'unknown error'));
       toast.error('Could not open checkout: ' + (e?.message || 'unknown error'));
     }
   };
