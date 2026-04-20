@@ -155,14 +155,22 @@ const Cart = () => {
     };
 
     try {
+      console.log('[Razorpay] Opening modal with options:', {
+        key: options.key,
+        order_id: options.order_id,
+        amount: options.amount,
+        currency: options.currency,
+      });
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (resp: any) => {
-        console.error('Razorpay payment.failed', resp);
+        console.error('[Razorpay] payment.failed', resp);
         toast.error(resp?.error?.description || 'Payment failed');
       });
       rzp.open();
+      console.log('[Razorpay] rzp.open() called');
     } catch (e: any) {
-      console.error('Razorpay open() threw', e);
+      console.error('[Razorpay] open() threw', e);
+      alert('Could not open Razorpay modal: ' + (e?.message || 'unknown error'));
       toast.error('Could not open checkout: ' + (e?.message || 'unknown error'));
     }
   };
