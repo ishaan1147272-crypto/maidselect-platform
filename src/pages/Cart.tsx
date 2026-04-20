@@ -14,8 +14,6 @@ declare global {
   }
 }
 
-const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_SbPnrrGOpvRt3g';
-
 const planLabels = {
   hourly: 'Hourly Plan',
   weekly: 'Weekly Plan',
@@ -56,7 +54,7 @@ const Cart = () => {
   const grandTotal = discountedSubtotal + adjustedPlatformFee;
   const totalSavings = discountAmount;
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!user) {
       toast.error('Please sign in to proceed');
       navigate('/auth');
@@ -64,8 +62,14 @@ const Cart = () => {
     }
     if (items.length === 0) return;
 
+    const { data: keyData, error: keyError } = await supabase.functions.invoke('get-razorpay-key');
+    if (keyError || !keyData?.keyId) {
+      toast.error('Payment unavailable. Please try again.');
+      return;
+    }
+
     const options = {
-      key: RAZORPAY_KEY,
+      key: keyData.keyId,
       amount: grandTotal * 100,
       currency: 'INR',
       name: 'MaidSelect',
