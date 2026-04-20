@@ -67,28 +67,52 @@ const Cart = () => {
       return;
     }
 
-    const { data: keyData, error: keyError } = await supabase.functions.invoke('get-razorpay-key');
-    if (keyError || !keyData?.keyId) {
-      console.error('Razorpay key fetch failed', keyError, keyData);
-      toast.error('Payment unavailable. Please try again.');
+    // 1. Create order on backend
+    const { data: orderData, error: orderError } = await supabase.functions.invoke(
+      'create-razorpay-order',
+      { body: { amount: Math.round(grandTotal * 100), currency: 'INR', receipt: `r_${Date.now()}` } },
+    );
+    if (orderError || !orderData?.order_id || !orderData?.keyId) {
+      console.error('Create order failed', orderError, orderData);
+      toast.error(orderData?.error || 'Could not start payment. Please try again.');
       return;
     }
 
     const description =
-      items.map(i => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250) || 'MaidSelect Booking';
+      items.map((i) => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250) ||
+      'MaidSelect Booking';
 
     const options = {
-      key: keyData.keyId,
-      amount: Math.round(grandTotal * 100),
-      currency: 'INR',
+      key: orderData.keyId,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      order_id: orderData.order_id,
       name: 'MaidSelect',
       description,
       handler: async (response: any) => {
         try {
+          // 2. Verify signature on backend
+          const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
+            'verify-razorpay-payment',
+            {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            },
+          );
+          if (verifyError || !verifyData?.verified) {
+            console.error('Verify failed', verifyError, verifyData);
+            toast.error('Payment could not be verified. Please contact support.');
+            return;
+          }
+
+          // 3. Insert bookings
           const scheduledDate = new Date().toISOString();
-          const bookings = items.map(item => {
+          const bookings = items.map((item) => {
             const itemTotal = item.planPrice * item.quantity;
-            const itemDiscount = Math.round(itemTotal * discountPercent / 100);
+            const itemDiscount = Math.round((itemTotal * discountPercent) / 100);
             const itemFinal = itemTotal - itemDiscount;
             return {
               customer_id: user.id,
@@ -102,11 +126,10 @@ const Cart = () => {
               payment_status: 'paid',
             };
           });
-
           const { error } = await supabase.from('bookings').insert(bookings);
           if (error) throw error;
 
-          const maidIds = items.map(i => i.id).join(',');
+          const maidIds = items.map((i) => i.id).join(',');
           clearCart();
           navigate(`/booking-success?maids=${maidIds}`);
         } catch (e: any) {
@@ -115,6 +138,9 @@ const Cart = () => {
       },
       prefill: { email: user.email },
       theme: { color: '#16a34a' },
+      modal: {
+        ondismiss: () => toast.info('Payment cancelled'),
+      },
     };
 
     try {
