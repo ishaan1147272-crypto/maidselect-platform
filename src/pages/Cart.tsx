@@ -62,18 +62,27 @@ const Cart = () => {
     }
     if (items.length === 0) return;
 
+    if (typeof window === 'undefined' || !window.Razorpay) {
+      toast.error('Payment script not loaded. Please refresh and try again.');
+      return;
+    }
+
     const { data: keyData, error: keyError } = await supabase.functions.invoke('get-razorpay-key');
     if (keyError || !keyData?.keyId) {
+      console.error('Razorpay key fetch failed', keyError, keyData);
       toast.error('Payment unavailable. Please try again.');
       return;
     }
 
+    const description =
+      items.map(i => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250) || 'MaidSelect Booking';
+
     const options = {
       key: keyData.keyId,
-      amount: grandTotal * 100,
+      amount: Math.round(grandTotal * 100),
       currency: 'INR',
       name: 'MaidSelect',
-      description: items.map(i => `${i.name} (${planLabels[i.planType]})`).join(', ').slice(0, 250),
+      description,
       handler: async (response: any) => {
         try {
           const scheduledDate = new Date().toISOString();
