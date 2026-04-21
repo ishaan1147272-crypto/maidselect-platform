@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import AddMaid from "./pages/AddMaid";
 import Cart from "./pages/Cart";
 import BookingSuccess from "./pages/BookingSuccess";
+import Success from "./pages/Success";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/admin/add-maid" element={<ProtectedRoute><AddMaid /></ProtectedRoute>} />
               <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
               <Route path="/booking-success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
+              <Route path="/success" element={<ProtectedRoute><Success /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </CartProvider>

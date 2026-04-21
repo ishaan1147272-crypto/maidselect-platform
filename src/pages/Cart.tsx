@@ -140,9 +140,8 @@ const Cart = () => {
           const { error } = await supabase.from('bookings').insert(bookings);
           if (error) throw error;
 
-          const maidIds = items.map((i) => i.id).join(',');
           clearCart();
-          navigate(`/booking-success?maids=${maidIds}`);
+          navigate('/success');
         } catch (e: any) {
           toast.error('Booking failed: ' + e.message);
         }
@@ -150,7 +149,10 @@ const Cart = () => {
       prefill: { email: user.email },
       theme: { color: '#16a34a' },
       modal: {
-        ondismiss: () => toast.info('Payment cancelled'),
+        ondismiss: () => {
+          console.log('[Razorpay] Payment cancelled');
+          toast.info('Payment cancelled');
+        },
       },
     };
 
