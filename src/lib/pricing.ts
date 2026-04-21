@@ -12,7 +12,13 @@ function stableRandom(id: string, salt: string, min: number, max: number): numbe
   return min + (h % (max - min + 1));
 }
 
+// Override map for special-case maids (e.g. test profiles)
+const RATE_OVERRIDES: Record<string, { hourly: number; weekly: number; monthly: number }> = {
+  '501119b8-0905-4c8a-a744-afbba21d0621': { hourly: 5, weekly: 5, monthly: 5 },
+};
+
 export function getMaidRates(id: string) {
+  if (RATE_OVERRIDES[id]) return RATE_OVERRIDES[id];
   return {
     hourly: stableRandom(id, 'hourly', 200, 400),
     weekly: stableRandom(id, 'weekly', 4000, 7000),
