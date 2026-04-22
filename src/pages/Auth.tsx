@@ -29,22 +29,33 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    console.log('[Auth] Google sign-in initiated');
     try {
       const redirectUri = isAndroidWebView()
         ? "com.example.maidselect://auth_callback"
-        : "https://maidselect.lovable.app";
+        : window.location.origin;
+
+      console.log('[Auth] Using redirect_uri:', redirectUri);
 
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: redirectUri,
       });
+
+      console.log('[Auth] signInWithOAuth result:', result);
+
       if (result.error) {
+        console.error('[Auth] Google sign-in error:', result.error);
         toast.error(result.error.message || 'Google sign-in failed');
         return;
       }
-      if (result.redirected) return;
+      if (result.redirected) {
+        console.log('[Auth] Redirecting to Google...');
+        return;
+      }
       toast.success('Welcome!');
       navigate('/');
     } catch (err: any) {
+      console.error('[Auth] Google sign-in threw:', err);
       toast.error(err.message || 'Google sign-in failed');
     } finally {
       setLoading(false);
