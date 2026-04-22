@@ -153,6 +153,16 @@ const Cart = () => {
           console.log('[Razorpay] Payment cancelled');
           toast.info('Payment cancelled');
         },
+        on_payment_success: (paymentDetails: any) => {
+          console.log('[Razorpay] modal.on_payment_success', paymentDetails);
+          toast.success('Payment captured by gateway');
+        },
+        on_payment_error: (errorDetails: any) => {
+          console.error('[Razorpay] modal.on_payment_error', errorDetails);
+          const reason = errorDetails?.error?.reason || errorDetails?.reason || 'unknown';
+          const code = errorDetails?.error?.code || errorDetails?.code || 'ERROR';
+          toast.error(`Payment failed [${code}]: ${reason}`);
+        },
       },
     };
 
@@ -166,7 +176,9 @@ const Cart = () => {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (resp: any) => {
         console.error('[Razorpay] payment.failed', resp);
-        toast.error(resp?.error?.description || 'Payment failed');
+        const code = resp?.error?.code || 'ERROR';
+        const reason = resp?.error?.reason || resp?.error?.description || 'Unknown reason';
+        toast.error(`Payment failed [${code}]: ${reason}`);
       });
       rzp.open();
       console.log('[Razorpay] rzp.open() called');
