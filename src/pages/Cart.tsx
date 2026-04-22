@@ -153,6 +153,16 @@ const Cart = () => {
           console.log('[Razorpay] Payment cancelled');
           toast.info('Payment cancelled');
         },
+        on_payment_success: (paymentDetails: any) => {
+          console.log('[Razorpay] modal.on_payment_success', paymentDetails);
+          toast.success('Payment captured by gateway');
+        },
+        on_payment_error: (errorDetails: any) => {
+          console.error('[Razorpay] modal.on_payment_error', errorDetails);
+          const reason = errorDetails?.error?.reason || errorDetails?.reason || 'unknown';
+          const code = errorDetails?.error?.code || errorDetails?.code || 'ERROR';
+          toast.error(`Payment failed [${code}]: ${reason}`);
+        },
       },
     };
 
@@ -166,7 +176,9 @@ const Cart = () => {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (resp: any) => {
         console.error('[Razorpay] payment.failed', resp);
-        toast.error(resp?.error?.description || 'Payment failed');
+        const code = resp?.error?.code || 'ERROR';
+        const reason = resp?.error?.reason || resp?.error?.description || 'Unknown reason';
+        toast.error(`Payment failed [${code}]: ${reason}`);
       });
       rzp.open();
       console.log('[Razorpay] rzp.open() called');
@@ -332,6 +344,12 @@ const Cart = () => {
       {/* Fixed Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border/60">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-5 space-y-3">
+          {/*
+            TEST CREDENTIALS (Razorpay test mode):
+            - UPI:  success@razorpay  (use this UPI ID for a successful test payment)
+            - Card: 4111 1111 1111 1111, any future expiry, any CVV, OTP 1234
+            Real cards/UPI in test mode are declined with "payment_risk_check_failed".
+          */}
           <Button
             className="w-full h-[52px] rounded-xl text-base font-semibold gap-2 shadow-lg shadow-primary/20"
             size="lg"
