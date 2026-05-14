@@ -58,6 +58,8 @@ const Cart = () => {
 
   const handlePayment = async () => {
     console.log('[Razorpay] handlePayment called');
+    if (isProcessing) return;
+    setIsProcessing(true);
 
     if (!user) {
       toast.error('Please sign in to proceed');
