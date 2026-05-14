@@ -141,7 +141,7 @@ const Cart = () => {
           if (error) throw error;
 
           clearCart();
-          navigate('/success');
+          navigate('/success', { state: { razorpay_payment_id: response.razorpay_payment_id } });
         } catch (e: any) {
           toast.error('Booking failed: ' + e.message);
         }
