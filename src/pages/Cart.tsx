@@ -63,15 +63,17 @@ const Cart = () => {
 
     if (!user) {
       toast.error('Please sign in to proceed');
+      setIsProcessing(false);
       navigate('/auth');
       return;
     }
-    if (items.length === 0) return;
+    if (items.length === 0) { setIsProcessing(false); return; }
 
     console.log('[Razorpay] window.Razorpay loaded?', typeof window !== 'undefined' && !!window.Razorpay);
     if (typeof window === 'undefined' || !window.Razorpay) {
       alert('Razorpay script failed to load. Please refresh the page.');
       toast.error('Payment script not loaded. Please refresh and try again.');
+      setIsProcessing(false);
       return;
     }
 
@@ -88,6 +90,7 @@ const Cart = () => {
       console.error('[Razorpay] Create order failed', orderError, orderData);
       alert(`Order creation failed: ${orderError?.message || orderData?.error || 'no order_id returned'}`);
       toast.error(orderData?.error || 'Could not start payment. Please try again.');
+      setIsProcessing(false);
       return;
     }
 
@@ -156,6 +159,7 @@ const Cart = () => {
         ondismiss: () => {
           console.log('[Razorpay] Payment cancelled');
           toast.info('Payment cancelled');
+          setIsProcessing(false);
         },
         on_payment_success: (paymentDetails: any) => {
           console.log('[Razorpay] modal.on_payment_success', paymentDetails);
@@ -166,6 +170,7 @@ const Cart = () => {
           const reason = errorDetails?.error?.reason || errorDetails?.reason || 'unknown';
           const code = errorDetails?.error?.code || errorDetails?.code || 'ERROR';
           toast.error(`Payment failed [${code}]: ${reason}`);
+          setIsProcessing(false);
         },
       },
     };
