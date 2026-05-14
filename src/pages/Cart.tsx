@@ -232,7 +232,7 @@ const Cart = () => {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-[200px]">
+      <div className="flex-1 overflow-y-auto pb-[240px]">
         <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
 
           {/* First-time discount banner */}
@@ -353,8 +353,8 @@ const Cart = () => {
       </div>
 
       {/* Fixed Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-lg border-t border-border/60">
-        <div className="max-w-2xl mx-auto px-4 pt-3 pb-5 space-y-3">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/98 backdrop-blur-lg border-t-2 border-border shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
+        <div className="max-w-2xl mx-auto px-5 pt-4 pb-6 space-y-3">
           {/*
             TEST CREDENTIALS (Razorpay test mode):
             - UPI:  success@razorpay  (use this UPI ID for a successful test payment)
@@ -362,12 +362,22 @@ const Cart = () => {
             Real cards/UPI in test mode are declined with "payment_risk_check_failed".
           */}
           <Button
-            className="w-full h-[52px] rounded-xl text-base font-semibold gap-2 shadow-lg shadow-primary/20"
+            className="w-full h-14 rounded-xl text-base font-bold gap-2 bg-primary text-white hover:bg-primary/90 shadow-xl shadow-primary/30 ring-1 ring-primary/40 disabled:opacity-100 disabled:bg-primary/80"
             size="lg"
             onClick={handlePayment}
+            disabled={isProcessing}
           >
-            <Lock className="h-4 w-4" />
-            Proceed to Pay {formatINR(grandTotal)}
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Lock className="h-4 w-4" />
+                Proceed to Pay {formatINR(grandTotal)}
+              </>
+            )}
           </Button>
 
           <div className="flex items-center justify-center gap-5">
