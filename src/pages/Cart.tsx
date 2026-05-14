@@ -188,6 +188,7 @@ const Cart = () => {
         const code = resp?.error?.code || 'ERROR';
         const reason = resp?.error?.reason || resp?.error?.description || 'Unknown reason';
         toast.error(`Payment failed [${code}]: ${reason}`);
+        setIsProcessing(false);
       });
       rzp.open();
       console.log('[Razorpay] rzp.open() called');
@@ -195,6 +196,7 @@ const Cart = () => {
       console.error('[Razorpay] open() threw', e);
       alert('Could not open Razorpay modal: ' + (e?.message || 'unknown error'));
       toast.error('Could not open checkout: ' + (e?.message || 'unknown error'));
+      setIsProcessing(false);
     }
   };
 
