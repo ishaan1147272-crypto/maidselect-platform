@@ -31,6 +31,7 @@ const Cart = () => {
   const { items, removeItem, updateQuantity, clearCart, subtotal, platformFee, total } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: bookingCount } = useQuery({
     queryKey: ['user-booking-count', user?.id],
