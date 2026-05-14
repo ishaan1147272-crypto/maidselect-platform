@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, LogOut, Menu, X, ShoppingCart } from 'lucide-react';
+import { Shield, LogOut, Menu, X, ShoppingCart, Phone } from 'lucide-react';
 import { useState } from 'react';
 
 export const Navbar = () => {
@@ -13,6 +13,19 @@ export const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
+      <div className="bg-primary text-primary-foreground text-xs sm:text-sm">
+        <div className="container flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-1.5 text-center">
+          <span className="inline-flex items-center gap-1.5 font-medium">
+            <Phone className="h-3.5 w-3.5" />
+            Contact us directly:{' '}
+            <a href="tel:9460050128" className="font-semibold underline underline-offset-2 hover:opacity-90">
+              9460050128
+            </a>
+          </span>
+          <span className="hidden sm:inline opacity-70">|</span>
+          <span className="opacity-95">Feel free to contact us</span>
+        </div>
+      </div>
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">

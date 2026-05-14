@@ -5,8 +5,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, Minus, Plus, Trash2, Lock, ShieldCheck, BadgeCheck, ShoppingCart, Tag } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, Lock, ShieldCheck, BadgeCheck, ShoppingCart, Tag, Loader2 } from 'lucide-react';
 import { formatINR } from '@/lib/pricing';
+import { useState } from 'react';
 
 declare global {
   interface Window {
