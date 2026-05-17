@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare, IndianRupee } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare, IndianRupee, Upload, Loader2 } from 'lucide-react';
 
 interface MaidForm {
   name: string; bio: string; experience_years: string; hourly_rate: string; city: string; profile_image_url: string;
