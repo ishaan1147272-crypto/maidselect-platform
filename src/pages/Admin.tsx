@@ -26,6 +26,47 @@ const Admin = () => {
   const [form, setForm] = useState<MaidForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `maid_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('maid-photos')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('maid-photos').getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+      setForm(prev => ({ ...prev, profile_image_url: publicUrl }));
+
+      // If editing, persist immediately to the maid row
+      if (editingId) {
+        const { error: updErr } = await supabase
+          .from('maids')
+          .update({ profile_image_url: publicUrl })
+          .eq('id', editingId);
+        if (updErr) throw updErr;
+        queryClient.invalidateQueries({ queryKey: ['admin-maids'] });
+        toast.success('Photo uploaded & saved');
+      } else {
+        toast.success('Photo uploaded — will save with the maid');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   const { data: maids } = useQuery({
     queryKey: ['admin-maids'],
