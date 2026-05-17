@@ -77,10 +77,13 @@ export type Database = {
           id: string
           is_available: boolean
           is_verified: boolean
+          is_visible: boolean
+          monthly_rate: number | null
           name: string
           phone: string | null
           profile_image_url: string | null
           updated_at: string
+          weekly_rate: number | null
         }
         Insert: {
           bio?: string | null
@@ -91,10 +94,13 @@ export type Database = {
           id?: string
           is_available?: boolean
           is_verified?: boolean
+          is_visible?: boolean
+          monthly_rate?: number | null
           name: string
           phone?: string | null
           profile_image_url?: string | null
           updated_at?: string
+          weekly_rate?: number | null
         }
         Update: {
           bio?: string | null
@@ -105,10 +111,13 @@ export type Database = {
           id?: string
           is_available?: boolean
           is_verified?: boolean
+          is_visible?: boolean
+          monthly_rate?: number | null
           name?: string
           phone?: string | null
           profile_image_url?: string | null
           updated_at?: string
+          weekly_rate?: number | null
         }
         Relationships: []
       }

@@ -16,7 +16,7 @@ const Index = () => {
     queryKey: ['maids'],
     queryFn: async () => {
       // Fetch all maids — no restrictive filters at the DB level
-      const { data, error } = await supabase.from('maids').select('*');
+      const { data, error } = await supabase.from('maids').select('*').eq('is_visible', true);
       if (error) throw error;
       return data;
     },
