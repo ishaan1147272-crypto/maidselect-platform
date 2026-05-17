@@ -228,6 +228,55 @@ const Admin = () => {
             <DialogContent>
               <DialogHeader><DialogTitle>{editingId ? 'Edit Maid' : 'New Maid'}</DialogTitle></DialogHeader>
               <div className="space-y-3">
+                {/* Image upload + preview */}
+                <div className="flex items-center gap-4">
+                  {form.profile_image_url ? (
+                    <img
+                      src={form.profile_image_url}
+                      alt="Maid preview"
+                      className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                      No photo
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full gap-2"
+                    >
+                      {uploading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Uploading...</>
+                      ) : (
+                        <><Upload className="h-4 w-4" />Upload Maid Photo</>
+                      )}
+                    </Button>
+                    {form.profile_image_url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setForm({ ...form, profile_image_url: '' })}
+                        className="w-full text-xs h-7"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 <Input placeholder="Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 <Textarea placeholder="Bio" value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} rows={3} />
                 <div className="grid grid-cols-2 gap-3">
@@ -235,7 +284,7 @@ const Admin = () => {
                   <Input placeholder="Hourly Rate *" type="number" value={form.hourly_rate} onChange={e => setForm({...form, hourly_rate: e.target.value})} />
                 </div>
                 <Input placeholder="City" value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
-                <Input placeholder="Profile Image URL" value={form.profile_image_url} onChange={e => setForm({...form, profile_image_url: e.target.value})} />
+                <Input placeholder="Or paste image URL" value={form.profile_image_url} onChange={e => setForm({...form, profile_image_url: e.target.value})} />
                 <Button className="w-full" onClick={() => saveMaid.mutate()} disabled={!form.name || !form.hourly_rate || saveMaid.isPending}>
                   {saveMaid.isPending ? 'Saving...' : editingId ? 'Update' : 'Create'}
                 </Button>
