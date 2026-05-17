@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare, IndianRupee } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Users, BookOpen, MessageSquare, IndianRupee, Upload, Loader2 } from 'lucide-react';
 
 interface MaidForm {
   name: string; bio: string; experience_years: string; hourly_rate: string; city: string; profile_image_url: string;
@@ -26,6 +26,47 @@ const Admin = () => {
   const [form, setForm] = useState<MaidForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `maid_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('maid-photos')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('maid-photos').getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+      setForm(prev => ({ ...prev, profile_image_url: publicUrl }));
+
+      // If editing, persist immediately to the maid row
+      if (editingId) {
+        const { error: updErr } = await supabase
+          .from('maids')
+          .update({ profile_image_url: publicUrl })
+          .eq('id', editingId);
+        if (updErr) throw updErr;
+        queryClient.invalidateQueries({ queryKey: ['admin-maids'] });
+        toast.success('Photo uploaded & saved');
+      } else {
+        toast.success('Photo uploaded — will save with the maid');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   const { data: maids } = useQuery({
     queryKey: ['admin-maids'],
@@ -187,6 +228,55 @@ const Admin = () => {
             <DialogContent>
               <DialogHeader><DialogTitle>{editingId ? 'Edit Maid' : 'New Maid'}</DialogTitle></DialogHeader>
               <div className="space-y-3">
+                {/* Image upload + preview */}
+                <div className="flex items-center gap-4">
+                  {form.profile_image_url ? (
+                    <img
+                      src={form.profile_image_url}
+                      alt="Maid preview"
+                      className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                      No photo
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full gap-2"
+                    >
+                      {uploading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Uploading...</>
+                      ) : (
+                        <><Upload className="h-4 w-4" />Upload Maid Photo</>
+                      )}
+                    </Button>
+                    {form.profile_image_url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setForm({ ...form, profile_image_url: '' })}
+                        className="w-full text-xs h-7"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
                 <Input placeholder="Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 <Textarea placeholder="Bio" value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} rows={3} />
                 <div className="grid grid-cols-2 gap-3">
@@ -194,7 +284,7 @@ const Admin = () => {
                   <Input placeholder="Hourly Rate *" type="number" value={form.hourly_rate} onChange={e => setForm({...form, hourly_rate: e.target.value})} />
                 </div>
                 <Input placeholder="City" value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
-                <Input placeholder="Profile Image URL" value={form.profile_image_url} onChange={e => setForm({...form, profile_image_url: e.target.value})} />
+                <Input placeholder="Or paste image URL" value={form.profile_image_url} onChange={e => setForm({...form, profile_image_url: e.target.value})} />
                 <Button className="w-full" onClick={() => saveMaid.mutate()} disabled={!form.name || !form.hourly_rate || saveMaid.isPending}>
                   {saveMaid.isPending ? 'Saving...' : editingId ? 'Update' : 'Create'}
                 </Button>
