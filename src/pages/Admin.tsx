@@ -354,7 +354,9 @@ const Admin = () => {
                       <span className="text-xs text-muted-foreground">Visible</span>
                       <Switch checked={m.is_visible} onCheckedChange={val => toggleVisible.mutate({ id: m.id, val })} />
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(m)} className="gap-1.5">
+                      <Pencil className="h-3.5 w-3.5" />Edit Details
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${m.name}?`)) deleteMaid.mutate(m.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>
