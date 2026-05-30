@@ -146,8 +146,11 @@ const Admin = () => {
       }
     },
     onSuccess: () => {
-      toast.success(editingId ? 'Maid updated!' : 'Maid created!');
+      toast.success('Database updated successfully!', {
+        style: { background: '#16a34a', color: '#fff', border: '1px solid #15803d' },
+      });
       queryClient.invalidateQueries({ queryKey: ['admin-maids'] });
+      queryClient.invalidateQueries({ queryKey: ['maids'] });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditingId(null);
@@ -240,7 +243,13 @@ const Admin = () => {
 
         {/* MAIDS TAB */}
         <TabsContent value="maids" className="space-y-4">
-          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />Add Maid</Button>
+          <Button
+            onClick={openNew}
+            size="lg"
+            className="w-full sm:w-auto h-14 px-8 text-base font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30 gap-2"
+          >
+            <Plus className="h-5 w-5" />Add New Maid
+          </Button>
 
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(emptyForm); setEditingId(null); } }}>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -300,8 +309,14 @@ const Admin = () => {
                   <Switch checked={!form.is_visible} onCheckedChange={(v) => setForm({...form, is_visible: !v})} />
                 </div>
 
-                <Button className="w-full" onClick={() => saveMaid.mutate()} disabled={!form.name || !form.hourly_rate || saveMaid.isPending}>
-                  {saveMaid.isPending ? 'Saving...' : editingId ? 'Update Maid' : 'Create Maid'}
+                <Button
+                  className="w-full h-12 text-base font-bold gap-2"
+                  onClick={() => saveMaid.mutate()}
+                  disabled={!form.name || !form.hourly_rate || saveMaid.isPending}
+                >
+                  {saveMaid.isPending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
+                  ) : editingId ? 'Save Changes' : 'Save & Publish'}
                 </Button>
               </div>
             </DialogContent>
@@ -339,7 +354,9 @@ const Admin = () => {
                       <span className="text-xs text-muted-foreground">Visible</span>
                       <Switch checked={m.is_visible} onCheckedChange={val => toggleVisible.mutate({ id: m.id, val })} />
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(m)} className="gap-1.5">
+                      <Pencil className="h-3.5 w-3.5" />Edit Details
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${m.name}?`)) deleteMaid.mutate(m.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>
