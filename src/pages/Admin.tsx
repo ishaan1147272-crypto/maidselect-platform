@@ -243,7 +243,13 @@ const Admin = () => {
 
         {/* MAIDS TAB */}
         <TabsContent value="maids" className="space-y-4">
-          <Button onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />Add Maid</Button>
+          <Button
+            onClick={openNew}
+            size="lg"
+            className="w-full sm:w-auto h-14 px-8 text-base font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30 gap-2"
+          >
+            <Plus className="h-5 w-5" />Add New Maid
+          </Button>
 
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(emptyForm); setEditingId(null); } }}>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
