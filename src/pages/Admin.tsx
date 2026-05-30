@@ -146,8 +146,11 @@ const Admin = () => {
       }
     },
     onSuccess: () => {
-      toast.success(editingId ? 'Maid updated!' : 'Maid created!');
+      toast.success('Database updated successfully!', {
+        style: { background: '#16a34a', color: '#fff', border: '1px solid #15803d' },
+      });
       queryClient.invalidateQueries({ queryKey: ['admin-maids'] });
+      queryClient.invalidateQueries({ queryKey: ['maids'] });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditingId(null);
