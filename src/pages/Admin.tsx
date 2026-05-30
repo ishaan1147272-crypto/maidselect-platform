@@ -309,8 +309,14 @@ const Admin = () => {
                   <Switch checked={!form.is_visible} onCheckedChange={(v) => setForm({...form, is_visible: !v})} />
                 </div>
 
-                <Button className="w-full" onClick={() => saveMaid.mutate()} disabled={!form.name || !form.hourly_rate || saveMaid.isPending}>
-                  {saveMaid.isPending ? 'Saving...' : editingId ? 'Update Maid' : 'Create Maid'}
+                <Button
+                  className="w-full h-12 text-base font-bold gap-2"
+                  onClick={() => saveMaid.mutate()}
+                  disabled={!form.name || !form.hourly_rate || saveMaid.isPending}
+                >
+                  {saveMaid.isPending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
+                  ) : editingId ? 'Save Changes' : 'Save & Publish'}
                 </Button>
               </div>
             </DialogContent>
