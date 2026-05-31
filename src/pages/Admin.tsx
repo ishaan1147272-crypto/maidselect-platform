@@ -337,7 +337,6 @@ const Admin = () => {
                   </Button>
                 </div>
               </form>
-              </div>
             </DialogContent>
           </Dialog>
 
