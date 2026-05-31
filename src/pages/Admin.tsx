@@ -252,9 +252,15 @@ const Admin = () => {
           </Button>
 
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(emptyForm); setEditingId(null); } }}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>{editingId ? 'Edit Maid' : 'New Maid'}</DialogTitle></DialogHeader>
-              <div className="space-y-4">
+            <DialogContent className="max-h-[90vh] p-0 gap-0 flex flex-col sm:max-w-lg">
+              <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
+                <DialogTitle>{editingId ? 'Edit Maid' : 'New Maid'}</DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={(e) => { e.preventDefault(); saveMaid.mutate(); }}
+                className="flex flex-col flex-1 min-h-0"
+              >
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                 {/* Image upload + preview */}
                 <div className="flex items-center gap-4">
                   {form.profile_image_url ? (
@@ -308,16 +314,29 @@ const Admin = () => {
                   </div>
                   <Switch checked={!form.is_visible} onCheckedChange={(v) => setForm({...form, is_visible: !v})} />
                 </div>
+                </div>
 
-                <Button
-                  className="w-full h-12 text-base font-bold gap-2"
-                  onClick={() => saveMaid.mutate()}
-                  disabled={!form.name || !form.hourly_rate || saveMaid.isPending}
-                >
-                  {saveMaid.isPending ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
-                  ) : editingId ? 'Save Changes' : 'Save & Publish'}
-                </Button>
+                {/* Sticky action footer — always visible */}
+                <div className="shrink-0 border-t bg-background px-6 py-4 grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-14 text-base font-semibold bg-muted text-foreground hover:bg-muted/80"
+                    onClick={() => { setDialogOpen(false); setForm(emptyForm); setEditingId(null); }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="h-14 text-base font-extrabold tracking-wide bg-[#16a34a] text-white hover:bg-[#15803d] shadow-lg shadow-[#16a34a]/30 gap-2"
+                    disabled={!form.name || !form.hourly_rate || saveMaid.isPending}
+                  >
+                    {saveMaid.isPending ? (
+                      <><Loader2 className="h-5 w-5 animate-spin" />SAVING...</>
+                    ) : 'SAVE DETAILS'}
+                  </Button>
+                </div>
+              </form>
               </div>
             </DialogContent>
           </Dialog>
